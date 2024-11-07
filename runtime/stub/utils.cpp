@@ -213,6 +213,8 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
   uint64_t mem_lat = 0;
   uint64_t mem_req_counter = 0;
   uint64_t mem_ticks = 0;
+  uint64_t dcache_prefetch_hits;
+  uint64_t dcache_total_access;
 
   uint64_t num_cores;
   CHECK_ERR(vx_dev_caps(hdevice, VX_CAPS_NUM_CORES, &num_cores), {
@@ -402,18 +404,18 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_LMEM_READS, core_id, &lmem_reads), {
           return err;
         });
-        uint64_t lmem_writes;
-        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_LMEM_WRITES, core_id, &lmem_writes), {
-          return err;
-        });
-        uint64_t lmem_bank_stalls;
-        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_LMEM_BANK_ST, core_id, &lmem_bank_stalls), {
-          return err;
-        });
-        int lmem_bank_utilization = calcAvgPercent(lmem_reads + lmem_writes, lmem_reads + lmem_writes + lmem_bank_stalls);
-        fprintf(stream, "PERF: core%d: lmem reads=%ld\n", core_id, lmem_reads);
-        fprintf(stream, "PERF: core%d: lmem writes=%ld\n", core_id, lmem_writes);
-        fprintf(stream, "PERF: core%d: lmem bank stalls=%ld (utilization=%d%%)\n", core_id, lmem_bank_stalls, lmem_bank_utilization);
+        // uint64_t lmem_writes;
+        // CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_LMEM_WRITES, core_id, &lmem_writes), {
+        //   return err;
+        // });
+        // uint64_t lmem_bank_stalls;
+        // CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_LMEM_BANK_ST, core_id, &lmem_bank_stalls), {
+        //   return err;
+        // });
+        // int lmem_bank_utilization = calcAvgPercent(lmem_reads + lmem_writes, lmem_reads + lmem_writes + lmem_bank_stalls);
+        // fprintf(stream, "PERF: core%d: lmem reads=%ld\n", core_id, lmem_reads);
+        // fprintf(stream, "PERF: core%d: lmem writes=%ld\n", core_id, lmem_writes);
+        // fprintf(stream, "PERF: core%d: lmem bank stalls=%ld (utilization=%d%%)\n", core_id, lmem_bank_stalls, lmem_bank_utilization);
       }
 
       if (icache_enable) {
@@ -463,6 +465,16 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_MSHR_ST, core_id, &dcache_mshr_stalls), {
           return err;
         });
+
+        // prefetch
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_PREFETCH_HITS_LT, core_id, dcache_prefetch_hits), {
+          return err;
+        });
+        
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_TOTAL_ACCESS_LT, core_id, &dcache_total_access), {
+          return err;
+        });
+
         int dcache_read_hit_ratio = calcRatio(dcache_read_misses, dcache_reads);
         int dcache_write_hit_ratio = calcRatio(dcache_write_misses, dcache_writes);
         int dcache_bank_utilization = calcAvgPercent(dcache_reads + dcache_writes, dcache_reads + dcache_writes + dcache_bank_stalls);
@@ -473,6 +485,12 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         fprintf(stream, "PERF: core%d: dcache write misses=%ld (hit ratio=%d%%)\n", core_id, dcache_write_misses, dcache_write_hit_ratio);
         fprintf(stream, "PERF: core%d: dcache bank stalls=%ld (utilization=%d%%)\n", core_id, dcache_bank_stalls, dcache_bank_utilization);
         fprintf(stream, "PERF: core%d: dcache mshr stalls=%ld (utilization=%d%%)\n", core_id, dcache_mshr_stalls, mshr_utilization);
+      
+        // prefetch
+        fprintf(stream, "PERF: prefetch hits=%ld\n", dcache_prefetch_hits);
+        fprintf(stream, "PERF: total prefetch=%ld\n", dcache_total_access);
+        double percentage = ((double)dcache_prefetch_hits / dcache_total_access) * 100;
+        fprintf(stream, "PERF: prefetch efficieny=%.2f%%\n", percentage);
       }
 
       if (l2cache_enable) {

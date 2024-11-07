@@ -149,7 +149,8 @@ enum class LsuType {
   TCU_LOAD,
   STORE,
   TCU_STORE,
-  FENCE
+  FENCE,
+  PREFETCH
 };
 
 enum class TCUType {
@@ -171,6 +172,7 @@ inline std::ostream &operator<<(std::ostream &os, const LsuType& type) {
   case LsuType::STORE: os << "STORE"; break;
   case LsuType::TCU_STORE: os << "TCU_STORE"; break;
   case LsuType::FENCE: os << "FENCE"; break;
+  case LsuType::PREFETCH: os << "PREFETCH"; break;
   default: assert(false);
   }
   return os;
@@ -285,6 +287,7 @@ struct LsuReq {
   BitVector<> mask;
   std::vector<uint64_t> addrs;
   bool     write;
+  bool prefetch;
   uint32_t tag;
   uint32_t cid;
   uint64_t uuid;
@@ -296,11 +299,13 @@ struct LsuReq {
     , tag(0)
     , cid(0)
     , uuid(0)
+    , prefetch(false)
   {}
 };
 
 inline std::ostream &operator<<(std::ostream &os, const LsuReq& req) {
   os << "rw=" << req.write << ", mask=" << req.mask << ", addr={";
+  os << "prefetch=" << req.prefetch << ", ";
   bool first_addr = true;
   for (size_t i = 0; i < req.mask.size(); ++i) {
     if (!first_addr) os << ", ";
@@ -347,23 +352,27 @@ struct MemReq {
   uint32_t tag;
   uint32_t cid;
   uint64_t uuid;
+  bool prefetch;
 
   MemReq(uint64_t _addr = 0,
           bool _write = false,
           AddrType _type = AddrType::Global,
           uint64_t _tag = 0,
           uint32_t _cid = 0,
-          uint64_t _uuid = 0
+          uint64_t _uuid = 0,
+          bool _prefetch = false
   ) : addr(_addr)
     , write(_write)
     , type(_type)
     , tag(_tag)
     , cid(_cid)
     , uuid(_uuid)
+    , prefetch(_prefetch)
   {}
 };
 
 inline std::ostream &operator<<(std::ostream &os, const MemReq& req) {
+  os << "prefetch=" << req.prefetch << ", ";
   os << "rw=" << req.write << ", ";
   os << "addr=0x" << std::hex << req.addr << std::dec << ", type=" << req.type;
   os << ", tag=0x" << std::hex << req.tag << std::dec << ", cid=" << req.cid;

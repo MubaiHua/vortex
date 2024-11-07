@@ -86,7 +86,7 @@ public:
 
 			in_used_banks.at(bank_id) = true;
 
-			if (!core_req.write || config_.write_reponse) {
+			if ((!core_req.write && !core_req.prefetch) || config_.write_reponse) {
 				// send response
 				MemRsp core_rsp{core_req.tag, core_req.cid, core_req.uuid};
 				simobject_->Outputs.at(req_id).push(core_rsp, 1);

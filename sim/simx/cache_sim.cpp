@@ -110,6 +110,7 @@ struct line_t {
 	uint32_t lru_ctr;
 	bool     valid;
 	bool     dirty;
+	bool     prefetch;
 
 	void clear() {
 		valid = false;
@@ -157,6 +158,7 @@ struct bank_req_t {
 	uint64_t uuid;
 	ReqType  type;
 	bool     write;
+	bool prefetch;
 
 	bank_req_t(uint32_t num_ports)
 		: ports(num_ports)
@@ -172,6 +174,7 @@ struct bank_req_t {
 
 inline std::ostream &operator<<(std::ostream &os, const bank_req_t& req) {
   os << "set=" << req.set_id << ", rw=" << req.write;
+  os << ", prefetch=" << req.prefetch;
   os << std::dec << ", type=" << req.type;
   os << ", tag=0x" << std::hex << req.tag;
 	os << ", req_tags={";
@@ -315,6 +318,8 @@ private:
 	uint64_t pending_read_reqs_;
 	uint64_t pending_write_reqs_;
 	uint64_t pending_fill_reqs_;
+	uint64_t prefetch_hits;
+	uint64_t total_access;
 
 public:
 	Impl(CacheSim* simobject, const Config& config)
@@ -421,6 +426,8 @@ public:
 		pending_read_reqs_  = 0;
 		pending_write_reqs_ = 0;
 		pending_fill_reqs_  = 0;
+		prefetch_hits = 0;
+		total_access = 0;
 	}
 
   void tick() {
@@ -532,6 +539,7 @@ public:
 				bank_req.uuid  = core_req.uuid;
 				bank_req.type  = bank_req_t::Core;
 				bank_req.write = core_req.write;
+				bank_req.prefetch = core_req.prefetch;
 				pipeline_req   = bank_req;
 				DT(3, simobject_->name() << " core-req: " << core_req);
 			}
@@ -583,6 +591,9 @@ private:
 		for (uint32_t bank_id = 0, n = (1 << config_.B); bank_id < n; ++bank_id) {
 			auto& bank = banks_.at(bank_id);
 			auto pipeline_req = pipeline_reqs_.at(bank_id);
+			if(pipeline_req.prefetch){
+				total_access++;
+			}
 
 			switch (pipeline_req.type) {
 			case bank_req_t::None:
@@ -595,11 +606,12 @@ private:
 				auto& line  = set.lines.at(entry.line_id);
 				line.valid  = true;
 				line.tag    = entry.bank_req.tag;
+				line.prefetch = entry.bank_req.prefetch;
 				--pending_fill_reqs_;
 			} break;
 			case bank_req_t::Replay: {
 				// send core response
-				if (!pipeline_req.write || config_.write_reponse) {
+				if ((!pipeline_req.write && !pipeline_req.prefetch) || config_.write_reponse) {
 					for (auto& info : pipeline_req.ports) {
 						if (!info.valid)
 							continue;
@@ -634,6 +646,10 @@ private:
 					} else {
 						free_line_id = i;
 					}
+					// increament prefetch hit
+					if(hit_line_id!=-1 && line.prefetch){
+						prefetch_hits++;
+					}
 				}
 
 				if (hit_line_id != -1) {
@@ -656,7 +672,7 @@ private:
 						}
 					}
 					// send core response
-					if (!pipeline_req.write || config_.write_reponse) {
+					if ((!pipeline_req.write && !pipeline_req.prefetch) || config_.write_reponse) {
 						for (auto& info : pipeline_req.ports) {
 							if (!info.valid)
 								continue;
@@ -698,7 +714,7 @@ private:
 							DT(3, simobject_->name() << "-bank" << bank_id << " writethrough: " << mem_req);
 						}
 						// send core response
-						if (config_.write_reponse) {
+						if (config_.write_reponse && !pipeline_req.prefetch) {
 							for (auto& info : pipeline_req.ports) {
 								if (!info.valid)
 									continue;
@@ -734,6 +750,9 @@ private:
 		}
 		// calculate memory latency
 		perf_stats_.mem_latency += pending_fill_reqs_;
+		// calculate prefetch efficiency
+		perf_stats_.total_access += total_access;
+		perf_stats_.prefetch_hits += prefetch_hits;
 	}
 };
 

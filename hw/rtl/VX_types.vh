@@ -173,10 +173,14 @@
 // PERF: lmem
 `define VX_CSR_MPM_LMEM_READS           12'hB1B     // memory reads
 `define VX_CSR_MPM_LMEM_READS_H         12'hB9B
-`define VX_CSR_MPM_LMEM_WRITES          12'hB1C     // memory writes
-`define VX_CSR_MPM_LMEM_WRITES_H        12'hB9C
-`define VX_CSR_MPM_LMEM_BANK_ST         12'hB1D     // bank conflicts
-`define VX_CSR_MPM_LMEM_BANK_ST_H       12'hB9D
+// `define VX_CSR_MPM_LMEM_WRITES          12'hB1C     // memory writes
+// `define VX_CSR_MPM_LMEM_WRITES_H        12'hB9C
+// `define VX_CSR_MPM_LMEM_BANK_ST         12'hB1D     // bank conflicts
+// `define VX_CSR_MPM_LMEM_BANK_ST_H       12'hB9D
+`define VX_CSR_MPM_PREFETCH_HITS_LT     12'hB1C
+`define VX_CSR_MPM_PREFETCH_HITS_LT_H   12'hB9C
+`define VX_CSR_MPM_TOTAL_ACCESS_LT      12'hB1D
+`define VX_CSR_MPM_TOTAL_ACCESS_LT_H    12'hB9D
 
 // Machine Performance-monitoring memory counters (class 3) ///////////////////
 // <Add your own counters: use addresses hB03..B1F, hB83..hB9F>

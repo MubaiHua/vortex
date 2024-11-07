@@ -249,10 +249,12 @@ import VX_fpu_pkg::*;
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_MISS_W, read_data_ro_w, mem_perf_if.dcache.write_misses);
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_BANK_ST, read_data_ro_w, mem_perf_if.dcache.bank_stalls);
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_MSHR_ST, read_data_ro_w, mem_perf_if.dcache.mshr_stalls);
+                        `CSR_READ_64(`VX_CSR_MPM_PREFETCH_HITS_LT, read_data_ro_w, mem_perf_if.dcache.prefetch_hits);
+                        `CSR_READ_64(`VX_CSR_MPM_TOTAL_ACCESS_LT, read_data_ro_w,  mem_perf_if.dcache.total_access);
                         // PERF: lmem
                         `CSR_READ_64(`VX_CSR_MPM_LMEM_READS, read_data_ro_w, mem_perf_if.lmem.reads);
-                        `CSR_READ_64(`VX_CSR_MPM_LMEM_WRITES, read_data_ro_w, mem_perf_if.lmem.writes);
-                        `CSR_READ_64(`VX_CSR_MPM_LMEM_BANK_ST, read_data_ro_w, mem_perf_if.lmem.bank_stalls);
+                        // `CSR_READ_64(`VX_CSR_MPM_LMEM_WRITES, read_data_ro_w, mem_perf_if.lmem.writes);
+                        // `CSR_READ_64(`VX_CSR_MPM_LMEM_BANK_ST, read_data_ro_w, mem_perf_if.lmem.bank_stalls);
                         // PERF: l2cache
                         `CSR_READ_64(`VX_CSR_MPM_L2CACHE_READS, read_data_ro_w, mem_perf_if.l2cache.reads);
                         `CSR_READ_64(`VX_CSR_MPM_L2CACHE_WRITES, read_data_ro_w, mem_perf_if.l2cache.writes);

@@ -74,7 +74,7 @@ public:
 				[](void* arg) {
 					auto rsp_args = reinterpret_cast<const DramCallbackArgs*>(arg);
 					// only send a response for read requests
-					if (!rsp_args->request.write) {
+					if (!rsp_args->request.write && !rsp_args->request.prefetch) {
 						MemRsp mem_rsp{rsp_args->request.tag, rsp_args->request.cid, rsp_args->request.uuid};
 						rsp_args->simobject->MemRspPorts.at(rsp_args->i).push(mem_rsp, 1);
 						DT(3, rsp_args->simobject->name() << " mem-rsp: bank=" << rsp_args->i << ", " << mem_rsp);

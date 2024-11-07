@@ -524,6 +524,8 @@ Word Emulator::get_csr(uint32_t addr, uint32_t tid, uint32_t wid) {
         CSR_READ_64(VX_CSR_MPM_DCACHE_MISS_W, socket_perf.dcache.write_misses);
         CSR_READ_64(VX_CSR_MPM_DCACHE_BANK_ST, socket_perf.dcache.bank_stalls);
         CSR_READ_64(VX_CSR_MPM_DCACHE_MSHR_ST, socket_perf.dcache.mshr_stalls);
+        CSR_READ_64(VX_CSR_MPM_PREFETCH_HITS_LT, socket_perf.dcache.prefetch_hits);
+        CSR_READ_64(VX_CSR_MPM_TOTAL_ACCESS_LT, socket_perf.dcache.total_access);
 
         CSR_READ_64(VX_CSR_MPM_L2CACHE_READS, cluster_perf.l2cache.reads);
         CSR_READ_64(VX_CSR_MPM_L2CACHE_WRITES, cluster_perf.l2cache.writes);
@@ -546,8 +548,8 @@ Word Emulator::get_csr(uint32_t addr, uint32_t tid, uint32_t wid) {
         CSR_READ_64(VX_CSR_MPM_MEM_BANK_TICK, proc_perf.memsim.ticks);
 
         CSR_READ_64(VX_CSR_MPM_LMEM_READS, lmem_perf.reads);
-        CSR_READ_64(VX_CSR_MPM_LMEM_WRITES, lmem_perf.writes);
-        CSR_READ_64(VX_CSR_MPM_LMEM_BANK_ST, lmem_perf.bank_stalls);
+        // CSR_READ_64(VX_CSR_MPM_LMEM_WRITES, lmem_perf.writes);
+        // CSR_READ_64(VX_CSR_MPM_LMEM_BANK_ST, lmem_perf.bank_stalls);
         }
       } break;
       default: {

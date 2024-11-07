@@ -1417,6 +1417,24 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
         std::abort();
       }
     } break;
+    case 1: {
+      switch (func3) {
+        case 0: {
+          // Prefetch
+          // std::cout<< "PREFETCH EXECUTE"<<std::endl;
+          trace->fu_type = FUType::LSU;
+          trace->lsu_type = LsuType::PREFETCH;
+          trace->src_regs[0] = {RegType::Integer, rsrc0};
+          auto trace_data = std::make_shared<LsuTraceData>(num_threads);
+          trace->data = trace_data;
+          for (uint32_t t = 0; t < num_threads; ++t) {
+          trace_data->mem_addrs[t] = { static_cast<uint64_t>(rsdata[t][0].i), 4 };
+        }
+      } break;
+        default:
+          std::abort();
+      }
+    } break;
     default:
       std::abort();
     }

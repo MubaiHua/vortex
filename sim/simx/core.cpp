@@ -233,6 +233,7 @@ void Core::fetch() {
   mem_req.tag   = pending_icache_.allocate(trace);
   mem_req.cid   = trace->cid;
   mem_req.uuid  = trace->uuid;
+  mem_req.prefetch = false;
   icache_req_ports.at(0).push(mem_req, 2);
   DT(3, "icache-req: addr=0x" << std::hex << mem_req.addr << ", tag=0x" << mem_req.tag << std::dec << ", " << *trace);
   fetch_latch_.pop();

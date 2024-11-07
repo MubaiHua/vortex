@@ -55,6 +55,7 @@ void LocalMemDemux::tick() {
     out_dc_req.tag   = in_req.tag;
     out_dc_req.cid   = in_req.cid;
     out_dc_req.uuid  = in_req.uuid;
+    out_dc_req.prefetch = in_req.prefetch;
 
     LsuReq out_lmem_req(out_dc_req);
 
@@ -152,6 +153,7 @@ void LsuMemAdapter::tick() {
         out_req.tag   = in_req.tag;
         out_req.cid   = in_req.cid;
         out_req.uuid  = in_req.uuid;
+        out_req.prefetch = in_req.prefetch;
 
         // send memory request
         ReqOut.at(i).push(out_req, delay_);

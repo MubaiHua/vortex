@@ -233,6 +233,8 @@ import VX_fpu_pkg::*;
                         `CSR_READ_64(`VX_CSR_MPM_STORES, read_data_ro_w, pipeline_perf_if.stores);
                         `CSR_READ_64(`VX_CSR_MPM_IFETCH_LT, read_data_ro_w, pipeline_perf_if.ifetch_latency);
                         `CSR_READ_64(`VX_CSR_MPM_LOAD_LT, read_data_ro_w, pipeline_perf_if.load_latency);
+                        `CSR_READ_64(`VX_CSR_MPM_MY_COUNTER1_LT, read_data_ro_w,`XLEN'(thread_masks[read_wid]));
+                        `CSR_READ_64(`VX_CSR_MPM_MY_COUNTER2_LT, read_data_ro_w,`XLEN'(active_warps));
                         default:;
                         endcase
                     end

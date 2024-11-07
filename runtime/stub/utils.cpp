@@ -160,6 +160,9 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
   uint64_t total_instrs = 0;
   uint64_t total_cycles = 0;
   uint64_t max_cycles = 0;
+  uint64_t active_threads = 0;
+  uint64_t total_threads_per_warp = 0;
+  uint64_t total_warps=0;
 
   auto calcRatio = [&](uint64_t part, uint64_t total)->int {
     if (total == 0)
@@ -394,6 +397,20 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         if (num_cores > 1) fprintf(stream, "PERF: core%d: stores=%ld\n", core_id, stores_per_core);
         stores += stores_per_core;
       }
+      // lab 1 efficiency counter
+      {
+        uint64_t active_threads_per_warp ;
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_MY_COUNTER1_LT, core_id, &active_threads_per_warp), {
+          return err;
+        });
+        CHECK_ERR(vx_dev_caps(hdevice, VX_CAPS_NUM_THREADS, &total_threads_per_warp), {
+          return err;
+        });
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_MY_COUNTER2_LT  , core_id, &total_warps), {
+          return err;
+        });
+        active_threads += active_threads_per_warp;
+      }
     } break;
     case VX_DCR_MPM_CLASS_MEM: {
       if (lmem_enable) {
@@ -568,6 +585,8 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
     int opds_percent = calcAvgPercent(opds_stalls, total_cycles);
     int ifetch_avg_lat = caclAverage(ifetch_lat, ifetches);
     int load_avg_lat = caclAverage(load_lat, loads);
+    double avg_active_threads = caclAverage(active_threads, total_warps); // PER WARP
+    double warp_execution_efficieny = calcAvgPercent(avg_active_threads , total_threads_per_warp);
     uint64_t scrb_total = scrb_alu + scrb_fpu + scrb_lsu + scrb_csrs + scrb_wctl;
     fprintf(stream, "PERF: scheduler idle=%ld (%d%%)\n", sched_idles, sched_idles_percent);
     fprintf(stream, "PERF: scheduler stalls=%ld (%d%%)\n", sched_stalls, sched_stalls_percent);
@@ -587,6 +606,11 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
     fprintf(stream, "PERF: stores=%ld\n", stores);
     fprintf(stream, "PERF: ifetch latency=%d cycles\n", ifetch_avg_lat);
     fprintf(stream, "PERF: load latency=%d cycles\n", load_avg_lat);
+    fprintf(stream, "PERF: Total Active Threads =%ld \n", active_threads);
+    fprintf(stream, "PERF: Total Warps =%ld \n", total_warps);
+    fprintf(stream, "PERF: Total Warps Supported =%ld \n", total_threads_per_warp);
+    fprintf(stream, "PERF: Average Active Threads =%f \n", avg_active_threads);
+    fprintf(stream, "PERF: Warp Efficiency: = %f%%\n", warp_execution_efficieny) ;
   } break;
   case VX_DCR_MPM_CLASS_MEM: {
     if (l2cache_enable) {

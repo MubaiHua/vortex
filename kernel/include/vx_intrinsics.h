@@ -101,6 +101,12 @@ inline void vx_tmc(int thread_mask) {
     __asm__ volatile (".insn r %0, 0, 0, x0, %1, x0" :: "i"(RISCV_CUSTOM0), "r"(thread_mask));
 }
 
+// prefetch
+inline void vx_prefetch(int address) {
+    __asm__ volatile (".insn r %0, 0, 1, x0, %1, x0" :: "i"(RISCV_CUSTOM0), "r"(address));
+}
+
+
 // disable all threads in the current warp
 inline void vx_tmc_zero() {
     __asm__ volatile (".insn r %0, 0, 0, x0, x0, x0" :: "i"(RISCV_CUSTOM0));

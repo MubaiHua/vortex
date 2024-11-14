@@ -4,13 +4,13 @@
 void kernel_body(kernel_arg_t* __UNIFORM__ arg) {
 	auto A = reinterpret_cast<TYPE*>(arg->A_addr);
 	auto B = reinterpret_cast<TYPE*>(arg->B_addr);
-	auto C = reinterpret_cast<int*>(arg->C_addr);
+	auto C = reinterpret_cast<TYPE*>(arg->C_addr);
     auto size = arg->size;
 
     int col = blockIdx.x;
     int row = blockIdx.y;
 
-    int sum(0);
+    TYPE sum(0);
     for (int e = 0; e < size; ++e) {
         int a = static_cast<int>(A[row * size + e]);
         int b = static_cast<int>(B[e * size + col]);

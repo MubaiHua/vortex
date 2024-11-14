@@ -144,6 +144,13 @@ inline int vx_split_n(int predicate) {
     return ret;
 }
 
+// dot 8 
+inline int vx_dot8(int predicate) {
+    int ret;
+    __asm__ volatile (".insn r %1, 0, 1, %0, %2, x0" : "=r"(ret) : "i"(RISCV_CUSTOM0), "r"(predicate));
+    return ret;
+}
+
 // Join
 inline void vx_join(int stack_ptr) {
     __asm__ volatile (".insn r %0, 3, 0, x0, %1, x0" :: "i"(RISCV_CUSTOM0), "r"(stack_ptr));

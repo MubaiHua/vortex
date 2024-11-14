@@ -13,6 +13,7 @@ all:
 	$(MAKE) -C fence
 	$(MAKE) -C vecaddx
 	$(MAKE) -C sgemmx
+	$(MAKE) -C dot8
 	$(MAKE) -C conv3x
 	$(MAKE) -C sgemm2x
 	$(MAKE) -C stencil3d
@@ -29,6 +30,7 @@ run-simx:
 	$(MAKE) -C fence run-simx
 	$(MAKE) -C vecaddx run-simx
 	$(MAKE) -C sgemmx run-simx
+	$(MAKE) -C dot8 run-simx
 	$(MAKE) -C conv3x run-simx
 	$(MAKE) -C sgemm2x run-simx
 	$(MAKE) -C stencil3d run-simx
@@ -45,6 +47,7 @@ run-rtlsim:
 	$(MAKE) -C fence run-rtlsim
 	$(MAKE) -C vecaddx run-rtlsim
 	$(MAKE) -C sgemmx run-rtlsim
+	$(MAKE) -C dot8 run-rtlsim
 	$(MAKE) -C conv3x run-rtlsim
 	$(MAKE) -C sgemm2x run-rtlsim
 	$(MAKE) -C stencil3d run-rtlsim
@@ -61,6 +64,7 @@ clean:
 	$(MAKE) -C fence clean
 	$(MAKE) -C vecaddx clean
 	$(MAKE) -C sgemmx clean
+	$(MAKE) -C dot8 clean
 	$(MAKE) -C conv3x clean
 	$(MAKE) -C sgemm2x clean
 	$(MAKE) -C stencil3d clean

@@ -433,6 +433,7 @@ package VX_gpu_pkg;
                         endcase
                     end
                 end
+                `ALU_TYPE_DOT8: `TRACE(level, ("DOT8"))
                 default: `TRACE(level, ("?"))
             endcase
         end

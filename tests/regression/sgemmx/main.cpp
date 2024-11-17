@@ -52,7 +52,7 @@ public:
   }
   static int generate() {
     // generate number between -128 to 127
-    int8_t randomNumber = static_cast<int8_t>(rand() % 256 - 128);
+    int8_t randomNumber = static_cast<int8_t>(rand() % 128);
     return randomNumber;
   }
   static bool compare(int8_t a, int8_t b, int index, int errors) {

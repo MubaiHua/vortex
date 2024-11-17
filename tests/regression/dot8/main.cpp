@@ -45,6 +45,28 @@ public:
 };
 
 template <>
+class Comparator<int8_t> {
+public:
+  static const char* type_str() {
+    return "int8";
+  }
+  static int generate() {
+    // generate number between -128 to 127
+    int8_t randomNumber = static_cast<int8_t>(rand() % 128);
+    return randomNumber;
+  }
+  static bool compare(int8_t a, int8_t b, int index, int errors) {
+    if (a != b) {
+      if (errors < 100) {
+        printf("*** error: [%d] expected=%d, actual=%d\n", index, b, a);
+      }
+      return false;
+    }
+    return true;
+  }
+};
+
+template <>
 class Comparator<float> {
 public:
   static const char* type_str() {
@@ -69,35 +91,14 @@ public:
   }
 };
 
-template <>
-class Comparator<int8_t> {
-public:
-  static const char* type_str() {
-    return "int8";
-  }
-  static int generate() {
-    // generate number between -128 to 127
-    int8_t randomNumber = static_cast<int8_t>(rand() % 256 - 128);
-    return randomNumber;
-  }
-  static bool compare(int8_t a, int8_t b, int index, int errors) {
-    if (a != b) {
-      if (errors < 100) {
-        printf("*** error: [%d] expected=%d, actual=%d\n", index, b, a);
-      }
-      return false;
-    }
-    return true;
-  }
-};
-
 static void matmul_cpu(int* out, const TYPE* A, const TYPE* B, uint32_t width, uint32_t height) {
   for (uint32_t row = 0; row < height; ++row) {
     for (uint32_t col = 0; col < width; ++col) {
       int sum(0);
       for (uint32_t e = 0; e < width; ++e) {
-
-          sum += A[row * width + e] * B[e * width + col];
+          int a = static_cast<int>(A[row * width + e]);
+          int b = static_cast<int>(B[e * width + col]);
+          sum += a * b;
       }
       out[row * width + col] = sum;
     }

@@ -407,7 +407,7 @@ static const char* op_string(const Instr &instr) {
       switch (func3) {
         case 0: return "DOT8";
         default:
-          std:abort();
+          std::abort();
       }
     default:
       std::abort();

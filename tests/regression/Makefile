@@ -16,6 +16,8 @@ all:
 	$(MAKE) -C conv3x
 	$(MAKE) -C sgemm2x
 	$(MAKE) -C stencil3d
+	$(MAKE) -C matmal
+	$(MAKE) -C smatmal
 
 run-simx:
 	$(MAKE) -C basic run-simx
@@ -32,6 +34,8 @@ run-simx:
 	$(MAKE) -C conv3x run-simx
 	$(MAKE) -C sgemm2x run-simx
 	$(MAKE) -C stencil3d run-simx
+	$(MAKE) -C matmal run-simx
+	$(MAKE) -C smatmal run-simx
 
 run-rtlsim:
 	$(MAKE) -C basic run-rtlsim
@@ -48,6 +52,8 @@ run-rtlsim:
 	$(MAKE) -C conv3x run-rtlsim
 	$(MAKE) -C sgemm2x run-rtlsim
 	$(MAKE) -C stencil3d run-rtlsim
+	$(MAKE) -C matmal run-rtlsim
+	$(MAKE) -C smatmal run-rtlsim
 
 clean:
 	$(MAKE) -C basic clean
@@ -64,3 +70,5 @@ clean:
 	$(MAKE) -C conv3x clean
 	$(MAKE) -C sgemm2x clean
 	$(MAKE) -C stencil3d clean
+	$(MAKE) -C matmal clean
+	$(MAKE) -C smatmal clean

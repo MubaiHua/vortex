@@ -1417,93 +1417,101 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
         std::abort();
       }
     } break;
+    case 1: {
+      switch (func3) {
+      // case 0: {
+      //   // PREFETCH
+      //   trace->fu_type = FUType::LSU;
+      //   trace->lsu_type = LsuType::PREFETCH;
+      //   trace->src_regs[0] = {RegType::Integer, rsrc0};
+      //   auto trace_data = std::make_shared<LsuTraceData>(num_threads);
+      //   trace->data = trace_data;
+      //   for (uint32_t t = 0; t < num_threads; ++t) {
+      //     trace_data->mem_addrs[t] = {static_cast<uint64_t>(rsdata[t][0].i), 4};
+      //   }
+      // } break;
+      case 0: {
+        // DOT8
+        trace->fu_type = FUType::ALU;
+        trace->alu_type = AluType::DOT8;
+        // trace->used_iregs.set(rsrc0);
+        // trace->used_iregs.set(rsrc1);
+        trace->src_regs[0] = {RegType::Integer, rsrc0};
+        trace->src_regs[1] = {RegType::Integer, rsrc1};
+        for (uint32_t t = thread_start; t < num_threads; ++t) {
+          if (!warp.tmask.test(t))
+            continue;
+          uint8_t A1 = (rsdata[t][0].i >> 0) & 0xFF;
+          uint8_t A2 = (rsdata[t][0].i >> 8) & 0xFF;
+          uint8_t A3 = (rsdata[t][0].i >> 16) & 0xFF;
+          uint8_t A4 = (rsdata[t][0].i >> 24) & 0xFF;
+          uint8_t B1 = (rsdata[t][1].i >> 0) & 0xFF;
+          uint8_t B2 = (rsdata[t][1].i >> 8) & 0xFF;
+          uint8_t B3 = (rsdata[t][1].i >> 16) & 0xFF;
+          uint8_t B4 = (rsdata[t][1].i >> 24) & 0xFF;
+          DP(3, "A1=" << (int)A1 << ", A2=" << (int)A2 << ", A3=" << (int)A3 << ", A4=" << (int)A4 << std::endl);
+          DP(3, "B1=" << (int)B1 << ", B2=" << (int)B2 << ", B3=" << (int)B3 << ", B4=" << (int)B4 << std::endl);
+          
+          rddata[t].i = A1 * B1 + A2 * B2 + A3 * B3 + A4 * B4;
+          DP(3, "A1*B1 + A2*B2 + A3*B3 + A4*B4 = " << rddata[t].i << std::endl);
+        }
+        rd_write = true;
+      } break;
+      default:
+        std::abort();
+      }
+    } break;
     default:
       std::abort();
     }
   } break;
   case Opcode::TCU: 
   { //TODO - make it data-type flexible
-    // uint32_t mem_bytes = 1;
-    // DP(3, "mem_bytes=" << mem_bytes << std::endl);
-    // uint16_t tc_size = this->get_csr(VX_TC_SIZE, 0, wid);
-    // uint32_t TC_per_warp = this->get_csr(VX_TC_NUM, 0, wid);
-
-    // DP(3, "tc_size=" << tc_size << std::endl);
-    // DP(3, "TC_per_warp=" << TC_per_warp << std::endl);
-
-    // //Number of loads - dependant on the thread config
-    // uint32_t n_tiles = this->get_csr(VX_MAT_MUL_SIZE, 0, wid);  //CSR instruction before MLOAD will ensure that this csr has value
-    // int num_data_per_thread;
-    // int num_data_per_thread_st;
-    // uint32_t num_threads_actv;
-    // uint32_t num_threads_actv_st;
-    // uint32_t data_bytes_load;
-    // uint32_t data_bytes_store;
-    // uint32_t num_threads_per_tc = MAX (1, num_threads/TC_per_warp);
-
-    // //LOAD
-    // if(num_threads > tc_size*tc_size*n_tiles*TC_per_warp)
-    // { 
-    //   num_threads_actv = tc_size*tc_size*n_tiles*TC_per_warp;
-    //   num_data_per_thread = 1;
-    // }
-    // else
-    // {
-    //   num_threads_actv = num_threads;
-    //   num_data_per_thread = (tc_size*tc_size*n_tiles)/num_threads_per_tc;
-    // }
-    // data_bytes_load = mem_bytes*num_data_per_thread;
-
-    // //STORE
-    // if(num_threads > tc_size*tc_size*TC_per_warp)
-    // { 
-    //   num_threads_actv_st = tc_size*tc_size*TC_per_warp;
-    //   num_data_per_thread_st = 1;
-    // }
-    // else
-    // {
-    //   num_threads_actv_st = num_threads;
-    //   num_data_per_thread_st = (tc_size*tc_size)/num_threads_per_tc;
-    // }
-    // data_bytes_store = mem_bytes*num_data_per_thread_st;
-    
-    // DP(3, "Num Tiles=" << n_tiles << std::endl);
-
     uint32_t mem_bytes = 1;
-    uint32_t matrix_size = this->get_csr(VX_TC_SIZE, 0, wid);
-    uint32_t matrix_size_sqr = matrix_size * matrix_size;
+    DP(3, "mem_bytes=" << mem_bytes << std::endl);
+    uint16_t tc_size = this->get_csr(VX_TC_SIZE, 0, wid);
+    uint32_t TC_per_warp = this->get_csr(VX_TC_NUM, 0, wid);
+
+    DP(3, "tc_size=" << tc_size << std::endl);
+    DP(3, "TC_per_warp=" << TC_per_warp << std::endl);
+
+    //Number of loads - dependant on the thread config
+    uint32_t n_tiles = this->get_csr(VX_MAT_MUL_SIZE, 0, wid);  //CSR instruction before MLOAD will ensure that this csr has value
     int num_data_per_thread;
     int num_data_per_thread_st;
     uint32_t num_threads_actv;
     uint32_t num_threads_actv_st;
     uint32_t data_bytes_load;
     uint32_t data_bytes_store;
+    uint32_t num_threads_per_tc = MAX (1, num_threads/TC_per_warp);
 
-    DP(3, "mem_bytes=" << mem_bytes << std::endl);
-
-    // LOAD
-    if(num_threads > matrix_size_sqr){
-      num_threads_actv = matrix_size_sqr;
+    //LOAD
+    if(num_threads > tc_size*tc_size*n_tiles*TC_per_warp)
+    { 
+      num_threads_actv = tc_size*tc_size*n_tiles*TC_per_warp;
       num_data_per_thread = 1;
     }
-    else{
+    else
+    {
       num_threads_actv = num_threads;
-      num_data_per_thread = matrix_size_sqr / num_threads;
-    }
-
-    // STORE
-    if(num_threads > matrix_size_sqr){
-      num_threads_actv_st = matrix_size_sqr;
-      num_data_per_thread_st = 1;
-    }
-    else{
-      num_threads_actv_st = num_threads;
-      num_data_per_thread_st = matrix_size_sqr / num_threads;
+      num_data_per_thread = (tc_size*tc_size*n_tiles)/num_threads_per_tc;
     }
     data_bytes_load = mem_bytes*num_data_per_thread;
-    data_bytes_store = mem_bytes*num_data_per_thread_st;
-    printf("num_threads_actv is %d, matrix size is %d \n", num_threads_actv, matrix_size);
 
+    //STORE
+    if(num_threads > tc_size*tc_size*TC_per_warp)
+    { 
+      num_threads_actv_st = tc_size*tc_size*TC_per_warp;
+      num_data_per_thread_st = 1;
+    }
+    else
+    {
+      num_threads_actv_st = num_threads;
+      num_data_per_thread_st = (tc_size*tc_size)/num_threads_per_tc;
+    }
+    data_bytes_store = mem_bytes*num_data_per_thread_st;
+    
+    DP(3, "Num Tiles=" << n_tiles << std::endl);
     
     switch (func3) {
       case 0: 
@@ -1528,22 +1536,15 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
           
           //Load A or B (depends on immsrc)
           int loop_offset = 0;
-          // DP(3, "n_tiles = " << n_tiles << "; num_data_per_thread = " << num_data_per_thread <<std::endl);
-          //   for (int n=0; n<num_data_per_thread; n++)
-          //   {
-          //     Word* temp_ref = &(warp.ireg_file.at(t).at(rsrc0));
-          //     this->dcache_read(temp_ref, (base_addr+(n*mem_bytes)+(loop_offset*mem_bytes)), mem_bytes);
+          DP(3, "n_tiles = " << n_tiles << "; num_data_per_thread = " << num_data_per_thread <<std::endl);
+            for (int n=0; n<num_data_per_thread; n++)
+            {
+              Word* temp_ref = &(warp.ireg_file.at(t).at(rsrc0));
+              this->dcache_read(temp_ref, (base_addr+(n*mem_bytes)+(loop_offset*mem_bytes)), mem_bytes);
 
-          //     scratchpad[loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n] = *temp_ref;
-          //     DP(3, "Scratchpad Index: " << loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n << ", Value: " << scratchpad[loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n]);
-          //   }
-          mem_bytes = 1;
-          for(int n=0; n<num_data_per_thread; n++){
-            Word* temp_ref = &(warp.ireg_file.at(t).at(rsrc0));
-            this->dcache_read(temp_ref, (base_addr+(n*mem_bytes)+(loop_offset*mem_bytes)), mem_bytes);
-            scratchpad[loop_offset + (immsrc*matrix_size_sqr) + (t*num_data_per_thread) + n] = *temp_ref;
-            printf("temp_ref[%d]=%d, address_read is=%d \n", t, *temp_ref, (base_addr+(n*mem_bytes)+(loop_offset*mem_bytes)));
-          }
+              scratchpad[loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n] = *temp_ref;
+              DP(3, "Scratchpad Index: " << loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n << ", Value: " << scratchpad[loop_offset + (immsrc*(n_tiles)*tc_size*tc_size) + (t*num_data_per_thread) + n]);
+            }
         }
         rd_write = true;  
       } break;
@@ -1555,7 +1556,7 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
 
         auto trace_data = std::make_shared<LsuTraceData>(num_threads);
         trace->data = trace_data;
-        mem_bytes = 4;
+
         for (uint32_t t = thread_start; t < num_threads_actv_st; ++t) 
         {
           if (!warp.tmask.test(t))
@@ -1570,7 +1571,7 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
           for (int n=0; n<num_data_per_thread_st; n++)
           {
             Word* temp_ref = &(warp.ireg_file.at(t).at(rsrc0));
-            *temp_ref = scratchpad[(matrix_size_sqr*2) + (t*num_data_per_thread_st) + n];
+            *temp_ref = scratchpad[(n_tiles*tc_size*tc_size*2) + (t*num_data_per_thread_st) + n];
 
             this->dcache_write(temp_ref, base_addr+(n*mem_bytes), mem_bytes);  
           }
@@ -1583,8 +1584,8 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
       }
       break;
       case 2: 
-      { //Matrix Multiply
-      /*
+      { //Matrix Multiply 
+      
         DP(4, "TCU MULTIPLY MAT");
         trace->fu_type = FUType::TCU;
         trace->tcu_type = TCUType::TCU_MUL;
@@ -1605,8 +1606,7 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
 
             int loop_offset = 0;
             int offset_b = n_tiles*n_tiles*n_tiles*tc_size*tc_size;
-            int offset_c = 2*n_tiles*n_tiles*n_tiles*tc_size*tc_size;
-            uint32_t accu_offset = (n_tiles)*(n_tiles)*(n_tiles)*tc_size*tc_size*3;
+            uint32_t accu_offset = (n_tiles)*(n_tiles)*(n_tiles)*tc_size*tc_size*2;
             for(int tiles = 0 ; tiles < n_tiles ; tiles++)  //What's the HW implication of this?? A counter implementation?
             { 
               for (int i = 0; i < tc_size; i++) { //ROW-1
@@ -1616,7 +1616,7 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
                   { //COL-1
                     sum = sum + scratchpad[loop_offset + thread_offset*n_tiles + i * tc_size + k] *scratchpad[loop_offset + thread_offset*n_tiles + offset_b + (k * tc_size + j)];
                   }
-                  scratchpad[accu_offset + thread_offset + (i * tc_size + j)] += sum + scratchpad[loop_offset + thread_offset*n_tiles + offset_c + (i * tc_size + j)];
+                  scratchpad[accu_offset + thread_offset + (i * tc_size + j)] += sum;
                   DP(3, "Scratchpad Index: " << accu_offset + (i * tc_size + j) << " , Value=" << scratchpad[accu_offset + (i * tc_size + j)]);
                 }
               }
@@ -1625,34 +1625,47 @@ void Emulator::execute(const Instr &instr, uint32_t wid, instr_trace_t *trace) {
             
           }
         }
-        */
-        DP(4, "TCU SPARSE MULTIPLY MAT");
-        trace->fu_type = FUType::TCU;
-        trace->tcu_type = TCUType::TCU_MUL;
-        for (uint32_t t = thread_start; t < num_threads_actv; ++t) 
-        {
-          if (!warp.tmask.test(t))
-            continue;
+        
+        // DP(4, "TCU SPARSE MULTIPLY MAT");
+        // trace->fu_type = FUType::TCU;
+        // trace->tcu_type = TCUType::TCU_MUL;
+        // uint32_t threads_per_tc = MAX (1, num_threads/TC_per_warp);
+        // for (uint32_t t = thread_start; t < num_threads_actv; ++t) 
+        // {
+        //   if (!warp.tmask.test(t))
+        //     continue;
          
-          DP(3, "Thread ID" << t); 
+        //   DP(3, "Thread ID" << t); 
+        //   //TC operation [only 1 thread in 1 warp needs to do this]
+        //   if (t%threads_per_tc == 0)
+        //   {
+            
+        //     // TODO : Fix needed for functional correctness
+        //     // TODO : change to systolic array implementation
+        //     uint32_t thread_offset = t*(tc_size*tc_size);
 
-          int row_ind = t / mat_size;
-          int col_ind = t % mat_size;
-
-          int offset_b =   mat_size*mat_size;
-          int offset_c = 2*mat_size*mat_size;
-          int sum = 0;
-          for (u_int32_t k = 0; k < mat_size; k++)
-          { 
-            uint32_t a_k = scratchpad[row_ind * mat_size + k];
-            if (a_k == 0)
-              continue;
-            uint32_t b_k = scratchpad[offset_b + (k * mat_size + col_ind)];
-            sum = sum + a_k * b_k;
-          }
-          scratchpad[offset_c + (row_ind * mat_size + col_ind)] += sum;
-          DP(3, "Scratchpad Index: " << offset_c + (row_ind * mat_size + col_ind) << " , Value=" << scratchpad[offset_c + (row_ind * mat_size + col_ind)]);
-        }
+        //     int loop_offset = 0;
+        //     int offset_b = n_tiles*n_tiles*n_tiles*tc_size*tc_size;
+        //     int offset_c = 2*n_tiles*n_tiles*n_tiles*tc_size*tc_size;
+        //     uint32_t accu_offset = (n_tiles)*(n_tiles)*(n_tiles)*tc_size*tc_size*3;
+        //     for(int tiles = 0 ; tiles < n_tiles ; tiles++)  //What's the HW implication of this?? A counter implementation?
+        //     { 
+        //       for (int i = 0; i < tc_size; i++) { //ROW-1
+        //         for (int j = 0; j < tc_size; j++) { //COL-2
+        //           int sum = 0;
+        //           for (int k = 0; k < tc_size; k++)
+        //           { //COL-1
+        //             sum = sum + scratchpad[loop_offset + thread_offset*n_tiles + i * tc_size + k] *scratchpad[loop_offset + thread_offset*n_tiles + offset_b + (k * tc_size + j)];
+        //           }
+        //           scratchpad[accu_offset + thread_offset + (i * tc_size + j)] += sum + scratchpad[loop_offset + thread_offset*n_tiles + offset_c + (i * tc_size + j)];
+        //           DP(3, "Scratchpad Index: " << accu_offset + (i * tc_size + j) << " , Value=" << scratchpad[accu_offset + (i * tc_size + j)]);
+        //         }
+        //       }
+        //       loop_offset += tc_size*tc_size; //Move to the next tiled matmul fragment
+        //     }
+            
+        //   }
+        // }
 
       }break;
       default:

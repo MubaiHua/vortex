@@ -125,6 +125,7 @@ inline std::ostream &operator<<(std::ostream &os, const FUType& type) {
 enum class AluType {
   ARITH,
   BRANCH,
+  DOT8,
   SYSCALL,
   IMUL,
   IDIV
@@ -134,6 +135,7 @@ inline std::ostream &operator<<(std::ostream &os, const AluType& type) {
   switch (type) {
   case AluType::ARITH:   os << "ARITH"; break;
   case AluType::BRANCH:  os << "BRANCH"; break;
+  case AluType::DOT8:    os << "DOT8"; break;
   case AluType::SYSCALL: os << "SYSCALL"; break;
   case AluType::IMUL:    os << "IMUL"; break;
   case AluType::IDIV:    os << "IDIV"; break;
@@ -149,7 +151,8 @@ enum class LsuType {
   TCU_LOAD,
   STORE,
   TCU_STORE,
-  FENCE
+  FENCE,
+  PREFETCH
 };
 
 enum class TCUType {
@@ -171,6 +174,7 @@ inline std::ostream &operator<<(std::ostream &os, const LsuType& type) {
   case LsuType::STORE: os << "STORE"; break;
   case LsuType::TCU_STORE: os << "TCU_STORE"; break;
   case LsuType::FENCE: os << "FENCE"; break;
+  case LsuType::PREFETCH: os << "PREFETCH"; break;
   default: assert(false);
   }
   return os;
@@ -241,6 +245,7 @@ enum class SfuType {
   TMC,
   WSPAWN,
   SPLIT,
+  DOT8,
   JOIN,
   BAR,
   PRED,
@@ -285,6 +290,7 @@ struct LsuReq {
   BitVector<> mask;
   std::vector<uint64_t> addrs;
   bool     write;
+  bool     prefetch;
   uint32_t tag;
   uint32_t cid;
   uint64_t uuid;
@@ -293,6 +299,7 @@ struct LsuReq {
     : mask(size)
     , addrs(size, 0)
     , write(false)
+    , prefetch(false)
     , tag(0)
     , cid(0)
     , uuid(0)
@@ -301,6 +308,7 @@ struct LsuReq {
 
 inline std::ostream &operator<<(std::ostream &os, const LsuReq& req) {
   os << "rw=" << req.write << ", mask=" << req.mask << ", addr={";
+  os << "prefetch=" << req.prefetch << ", ";
   bool first_addr = true;
   for (size_t i = 0; i < req.mask.size(); ++i) {
     if (!first_addr) os << ", ";
@@ -343,6 +351,7 @@ inline std::ostream &operator<<(std::ostream &os, const LsuRsp& rsp) {
 struct MemReq {
   uint64_t addr;
   bool     write;
+  bool     prefetch;
   AddrType type;
   uint32_t tag;
   uint32_t cid;
@@ -350,12 +359,14 @@ struct MemReq {
 
   MemReq(uint64_t _addr = 0,
           bool _write = false,
+          bool _prefetch = false,
           AddrType _type = AddrType::Global,
           uint64_t _tag = 0,
           uint32_t _cid = 0,
           uint64_t _uuid = 0
   ) : addr(_addr)
     , write(_write)
+    , prefetch(_prefetch)
     , type(_type)
     , tag(_tag)
     , cid(_cid)
@@ -365,6 +376,7 @@ struct MemReq {
 
 inline std::ostream &operator<<(std::ostream &os, const MemReq& req) {
   os << "rw=" << req.write << ", ";
+  os << "prefetch=" << req.prefetch << ", ";
   os << "addr=0x" << std::hex << req.addr << std::dec << ", type=" << req.type;
   os << ", tag=0x" << std::hex << req.tag << std::dec << ", cid=" << req.cid;
   os << " (#" << req.uuid << ")";

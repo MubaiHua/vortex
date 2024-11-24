@@ -18,7 +18,7 @@ void kernel_body(kernel_arg_t* __UNIFORM__ arg) {
 	int num_warps = arg->num_warps;
 	uint32_t matrix_size = arg->matrix_size;
 	
-	int n_tiles = matrix_size/tc_size;
+	int n_tiles = 1;
 	int num_output_tiles = (matrix_size*matrix_size)/(tc_size*tc_size);
 	
 	int num_tasks = arg->num_tasks;

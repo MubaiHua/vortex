@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
   variables.matmul_cpu();
 
   uint32_t tc_size_f = tc_size*tc_size;
-  uint32_t n_tiles = matrix_size/tc_size;
+  uint32_t n_tiles = 1;
   
   variables.A_mat.resize(buf_size);
   variables.B_mat.resize(buf_size);
